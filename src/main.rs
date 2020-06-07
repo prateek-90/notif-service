@@ -1,15 +1,14 @@
-// use actix_web::{post, get, web, web::Json, App, HttpServer, Responder, HttpResponse, http::StatusCode};
 use std::fs::File;
-// use std::io::prelude::*;
-mod models;
-mod app;
-mod appconfig;
 use appconfig::AppConfig;
 use std::env;
 use kafka::consumer::{Consumer, GroupOffsetStorage, FetchOffset};
-// use crate::models::ConnectRequest;
 use std::io::Result;
 use actix;
+
+mod models;
+mod app;
+mod appconfig;
+mod utils;
 
 // fn _build_kafka_consumer(config: &app_config::AppConfig) -> Result<Consumer>{
 //     let mut consumer =
@@ -27,7 +26,7 @@ fn main() {
     dotenv::dotenv().ok();
 
     if env::var("RUST_LOG").ok().is_none() {
-        env::set_var("RUST_LOG", "notif=debug,actix_web=debug");
+        env::set_var("RUST_LOG", "notif=debug,actix_web=info");
     }
     env_logger::init();
     let f = File::open("config/config.yml").expect("Config file not found.");

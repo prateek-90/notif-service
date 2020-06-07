@@ -1,22 +1,24 @@
 use actix_cors::Cors;
 use actix_web::{
     http::header::{AUTHORIZATION, CONTENT_TYPE},
-    middleware::Logger,
+    middleware::Logger as ActixLogger,
     web,
     web::Data,
-    App, HttpRequest, HttpServer,
-    Responder,
+    App, HttpRequest, HttpServer, Responder,
 };
-use std::sync::Arc;
 use std::fs::File;
 use std::io::prelude::*;
+use std::sync::Arc;
 mod otp;
-// mod super::appconfig;
 use super::appconfig::AppConfig;
+use slog::*;
+use slog_term::*;
+
 
 #[derive(Clone)]
 pub struct AppState {
     pub app_name: String,
+    pub logger: Logger,
 }
 
 async fn index(_state: Data<AppState>, _req: HttpRequest) -> impl Responder {
@@ -24,12 +26,17 @@ async fn index(_state: Data<AppState>, _req: HttpRequest) -> impl Responder {
 }
 
 pub fn start(config: &AppConfig) {
+    let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
+    let logger = Logger::root(slog_term::FullFormat::new(plain).build().fuse(), o!());
+
+    info!(logger, "Logging ready!");
     let state = AppState {
         app_name: String::from("notif-worker"),
+        logger: logger,
     };
     let bind_address = format!("127.0.0.1:{}", &config.server.port.to_string());
 
-    let cors = Cors::new()
+    let _cors = Cors::new()
         .allowed_origin("*")
         .send_wildcard()
         .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
@@ -39,7 +46,7 @@ pub fn start(config: &AppConfig) {
     HttpServer::new(move || {
         App::new()
             .data(state.clone())
-            .wrap(Logger::default())
+            .wrap(ActixLogger::default())
             // .wrap(cors)
             .configure(routes)
     })
