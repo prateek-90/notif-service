@@ -1,0 +1,3 @@
+server:
+    context_path: /notif
+    port: 8083
